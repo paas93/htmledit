@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>HTML 정리 도구</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    textarea, input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    .output {
+      background: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ccc;
+      white-space: pre-wrap;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .output:hover {
+      background: #e0e0e0;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 16px;
+      margin-top: 5px;
+    }
+
+    /* 토스트 스타일 */
+    #toast {
+      visibility: hidden;
+      min-width: 200px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 12px;
+      position: fixed;
+      z-index: 1;
+      left: 50%;
+      top: 30px;
+      transform: translateX(-50%);
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    /* 토글 스위치 스타일 */
+    .switch-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+.switch-label {
+  margin-right: 10px;
+  font-size: 16px;       /* 글자 크기 증가 */
+  font-weight: 600;      /* 글자 진하게 */
+}
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    .switch input:checked + .slider {
+      background-color: #4caf50;
+    }
+    .switch input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+  </style>
+</head>
+<body>
+  <h2>🛠️ HTML 정리 도구</h2>
+
+  <!-- 공통 입력 -->
+  <textarea id="input" placeholder="HTML 코드를 입력하세요..."></textarea>
+  <div>
+    <button onclick="removeBr()">&lt;br&gt; 제거</button>
+    <button onclick="extractImageUrls()">이미지 주소 추출</button>
+    <button onclick="resetAll()">🔄 초기화</button>
+  </div>
+
+  <h3>1️⃣ &lt;br&gt; 제거 결과 (클릭시 복사):</h3>
+  <div id="brOutput" class="output" onclick="copyToClipboard('brOutput')">클릭해서 복사</div>
+
+  <h3>2️⃣ 이미지 주소 추출 결과 (클릭시 복사):</h3>
+  <div id="imgOutput" class="output" onclick="copyToClipboard('imgOutput')">클릭해서 복사</div>
+
+  <hr>
+
+  <!-- 이미지 + 링크 조합기 -->
+  <h2>💾 이미지 링크 HTML 생성기</h2>
+
+  <div class="switch-container">
+    <span class="switch-label">최상단 이미지에 링크 넣기</span>
+    <label class="switch">
+      <input type="checkbox" id="linkFirstImage">
+      <span class="slider"></span>
+    </label>
+  </div>
+<label for="imageInput"><strong>🖼️ 이미지 주소</strong></label>
+  <textarea id="imageInput" placeholder="이미지 주소를 줄 단위로 입력하세요"></textarea>
+<label for="linkInput"><strong>🔗 링크 주소</strong></label>
+  <textarea id="linkInput" placeholder="링크 주소를 줄 단위로 입력하세요 (이미지 수보다 하나 적게 입력 가능)"></textarea>
+<label for="widthInput"><strong>📏 Width 값</strong></label>
+  <input type="text" id="widthInput" placeholder="이미지 width 값 (예: 300 또는 100%)">
+  <div>
+    <button onclick="generateHtml()">HTML 생성</button>
+  </div>
+
+  <h3>3️⃣ 생성된 HTML 코드 (클릭시 복사):</h3>
+  <div id="output" class="output" onclick="copyToClipboard('output')">클릭해서 복사</div>
+
+  <!-- 토스트 알림 -->
+  <div id="toast">복사되었습니다</div>
+
+  <script>
+    function removeBr() {
+      const input = document.getElementById("input").value;
+      const cleaned = input.replace(/<br\s*\/?>/gi, "");
+      document.getElementById("brOutput").textContent = cleaned;
+    }
+
+    function extractImageUrls() {
+      const input = document.getElementById("input").value;
+      const regex = /<img\s+[^>]*src=["']([^"']+\.jpg)["'][^>]*>/gi;
+      let matches;
+      let urls = [];
+
+      while ((matches = regex.exec(input)) !== null) {
+        urls.push(matches[1]);
+      }
+
+      document.getElementById("imgOutput").textContent = urls.join("\n");
+    }
+
+    function generateHtml() {
+      const images = document.getElementById("imageInput").value.trim().split("\n");
+      const links = document.getElementById("linkInput").value.trim().split("\n");
+      const width = document.getElementById("widthInput").value.trim();
+      const linkFirst = document.getElementById("linkFirstImage").checked;
+
+      let html = '<div style="text-align: center;">\n';
+
+      for (let i = 0; i < images.length; i++) {
+        const imgTag = `<img src="${images[i].trim()}"${width ? ` width="${width}"` : ""}>`;
+        const linkIndex = linkFirst ? i : i - 1;
+
+        if (linkIndex >= 0 && linkIndex < links.length) {
+          html += `<a href="${links[linkIndex].trim()}" target="_blank">${imgTag}</a>\n`;
+        } else {
+          html += imgTag + "\n";
+        }
+      }
+
+      html += '</div>';
+      document.getElementById("output").textContent = html;
+    }
+
+    function copyToClipboard(id) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("복사되었습니다");
+      }).catch(err => {
+        showToast("복사 실패: " + err);
+      });
+    }
+
+    function resetAll() {
+      document.getElementById("input").value = "";
+      document.getElementById("brOutput").textContent = "클릭해서 복사";
+      document.getElementById("imgOutput").textContent = "클릭해서 복사";
+      document.getElementById("imageInput").value = "";
+      document.getElementById("linkInput").value = "";
+      document.getElementById("widthInput").value = "";
+      document.getElementById("linkFirstImage").checked = false;
+      document.getElementById("output").textContent = "클릭해서 복사";
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = "show";
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
